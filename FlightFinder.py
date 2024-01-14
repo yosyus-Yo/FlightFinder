@@ -119,3 +119,5 @@ def startMessage(inputC):
             thread_id=thread_id
         )
         return messages.data[0].content[0].text.value
+    
+    #git 추가
