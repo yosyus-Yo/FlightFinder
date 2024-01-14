@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <title>FlightFinder</title>
+    <style>
+        body {
+            background-color: skyblue;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        #flightForm {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 90%;
+            }
+        }
+        #chat-container {
+            position: fixed;
+            bottom: 70px;
+            right: 30px;
+            background-color: rgb(161, 218, 255);
+            border: 1px solid #ffffff;
+            border-radius: 15px; /* 더 둥글게 */
+            width: 400px;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease-in-out; /* 애니메이션 추가 */
+            transform: translateX(110%); /* 초기 상태: 숨겨진 상태 */
+        }
+        .chat-visible #chat-container {
+            transform: translateX(0); /* 채팅창 나타남 */
+        }
+        #toggle-chat-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease-in-out; /* 애니메이션 추가 */
+        }
+        #chat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            height: 600px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        #chat-input {
+            width: calc(100% - 60px);
+            padding: 10px;
+        }
+
+        #send-btn {
+            width: 70px;
+            height: 40px;
+        }
+        .message {
+            display: flex;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: lightyellow;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+            max-width: 80%;
+        }
+        .system-message {
+            background-color: rgb(255, 255, 255);
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+            max-width: 80%;
+        }
+        #chat-input-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+    </style>
+    <script>
+        function toggleTripType() {
+            var oneWay = document.getElementById('oneWay');
+            var roundTrip = document.getElementById('roundTrip');
+            var returnDate = document.getElementById('returnDate');
+            var returnTime = document.getElementById('returnTime');
+            if (oneWay.checked && roundTrip.checked) {
+                if (event.target.id === "oneWay") {
+                    roundTrip.checked = false;
+                } else {
+                    oneWay.checked = false;
+                }
+            } else if (!oneWay.checked && !roundTrip.checked) {
+                if (event.target.id === "oneWay") {
+                    roundTrip.checked = true;
+                } else {
+                    oneWay.checked = true;
+                }
+            }
+            var showReturn = roundTrip.checked;
+            returnDate.style.display = showReturn ? 'block' : 'none';
+            returnTime.style.display = showReturn ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>FlightFinder</h1>
+        <form id="flightForm">
+            <div class="form-group">
+                <input type="checkbox" id="oneWay" name="tripType" onclick="toggleTripType()">
+                <label for="oneWay">편도</label>
+                <input type="checkbox" id="roundTrip" name="tripType" onclick="toggleTripType()" checked>
+                <label for="roundTrip">왕복</label>
+            </div>
+            <div class="form-group">
+                <label for="from">출발지:</label>
+                <input type="text" id="from" name="from">
+            </div>
+            <div class="form-group">
+                <label for="to">도착지:</label>
+                <input type="text" id="to" name="to">
+            </div>
+            <div class="form-group">
+                <label for="departureDate">출발 날짜:</label>
+                <input type="date" id="departureDate" name="departureDate">
+            </div>
+            <div class="form-group">
+                <label for="departureTime">출발 시간:</label>
+                <input type="number" name="departureTime1" min="0" max="23">
+                <label for="departureTime">~</label>
+                <input type="number" name="departureTime2" min="0" max="23">
+            </div>
+            <div class="form-group hidden" id="returnDate">
+                <label for="returnDate">귀국 날짜:</label>
+                <input type="date" id="returnDate" name="returnDate">
+            </div>
+            <div class="form-group" id="returnTime">
+                <label for="returnTime">귀국 시간:</label>
+                <input type="number" name="returnTime1" min="0" max="23">
+                <label for="returnTime">~</label>
+                <input type="number" name="returnTime2" min="0" max="23">
+            </div>
+            <div class="form-group">
+                <button type="submit">검색</button>
+            </div>
+        </form>
+        <div id="chat-container">
+            <div id="chat-box"></div>
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="메시지를 입력하세요...">
+                <button id="send-btn">전송</button>
+            </div>
+        </div>
+        <button id="toggle-chat-btn">채팅</button>
+    </div>
+    <div>
+        <script>
+            document.getElementById('send-btn').addEventListener('click', function() {
+                var input = document.getElementById('chat-input');
+                var message = input.value;
+                if (message) {
+                    addMessage(message, 'user-message');
+                    input.disabled = true; // 입력 비활성화
+                    input.value = ''; // 입력 필드 초기화
+                    fetch('/process_message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            addMessage(data.response, 'system-message');
+                            input.disabled = false; // 입력 활성화
+                        })
+                        .catch(error => console.error('Error:', error));
+                    }
+                });
+            document.getElementById('toggle-chat-btn').addEventListener('click', function() {
+                var body = document.body;
+                body.classList.toggle('chat-visible');
+            });
+            function addMessage(text, className) {
+                var chatBox = document.getElementById('chat-box');
+                var newMessage = document.createElement('div');
+                newMessage.textContent = text;
+                newMessage.classList.add('message', className);
+                chatBox.appendChild(newMessage);
+            }
+            document.getElementById('chat-input').addEventListener('keyup', function(event) {
+                if (event.key === "Enter") {
+                    var input = document.getElementById('chat-input');
+                    var message = input.value;
+                    if (message) {
+                    addMessage(message, 'user-message');
+                    input.value = ''; // 입력 필드 초기화
+                    input.disabled = true; // 입력 비활성화
+                    fetch('/process_message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            addMessage(data.response, 'system-message');
+                            input.disabled = false; // 입력 활성화
+                        })
+                        .catch(error => console.error('Error:', error));
+                    }
+            }
+        });
+        
+            function addMessage(text, className) {
+                var chatBox = document.getElementById('chat-box');
+                var newMessage = document.createElement('div');
+                newMessage.textContent = text;
+                newMessage.classList.add('message', className);
+                chatBox.appendChild(newMessage);
+            }
+            document.addEventListener('click', function(event) {
+                var chatContainer = document.getElementById('chat-container');
+                var toggleChatBtn = document.getElementById('toggle-chat-btn');
+        
+                // 채팅창 및 토글 버튼 외부 클릭 확인
+                if (!chatContainer.contains(event.target) && !toggleChatBtn.contains(event.target)) {
+                    document.body.classList.remove('chat-visible');
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>
