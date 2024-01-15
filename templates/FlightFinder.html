@@ -169,22 +169,22 @@
             </div>
             <div class="form-group">
                 <label for="departureTime">출발 시간:</label>
-                <input type="number" name="departureTime1" min="0" max="23">
+                <input type="number" name="departureTime" min="0" max="23", value = 0>
                 <label for="departureTime">~</label>
-                <input type="number" name="departureTime2" min="0" max="23">
+                <input type="number" name="departureTime" min="0" max="23", value = 23>
             </div>
             <div class="form-group hidden" id="returnDate">
-                <label for="returnDate">귀국 날짜:</label>
-                <input type="date" id="returnDate" name="returnDate">
+                <label for="returnDate1">귀국 날짜:</label>
+                <input type="date" id="returnDate1" name="returnDate1">
             </div>
             <div class="form-group" id="returnTime">
                 <label for="returnTime">귀국 시간:</label>
-                <input type="number" name="returnTime1" min="0" max="23">
+                <input type="number" name="returnTime" min="0" max="23", value = 0>
                 <label for="returnTime">~</label>
-                <input type="number" name="returnTime2" min="0" max="23">
+                <input type="number" name="returnTime" min="0" max="23", value = 23>
             </div>
             <div class="form-group">
-                <button type="submit">검색</button>
+                <button id = "submit">검색</button>
             </div>
         </form>
         <div id="chat-container">
@@ -198,39 +198,61 @@
     </div>
     <div>
         <script>
+            document.getElementById('submit').addEventListener('click', function(event) {
+            document.body.classList.toggle('chat-visible');
+            event.preventDefault(); // 폼 기본 제출 동작 방지
+
+            var from = document.getElementById('from').value;
+            var to = document.getElementById('to').value;
+            var departureDate = document.getElementById('departureDate').value;
+            
+            // 필수 필드 검증
+            if (!from || !to || !departureDate) {
+                alert('출발지, 도착지, 출발 날짜를 입력해주세요.');
+                return;
+            }
+
+            // // 시간 범위 확인
+            var departureTime1 = document.getElementsByName('departureTime')[0].value;
+            var departureTime2 = document.getElementsByName('departureTime')[1].value;
+            if (departureTime1 && departureTime2 && (departureTime1 >= departureTime2)) {
+                alert('출발 시간 범위를 올바르게 설정해주세요.');
+                return;
+            }
+            var formData = `출발지: ${from}, 도착지: ${to}, 출국날짜: ${departureDate}, 출국시 ${departureTime1}시와 ${departureTime2}시 사이에 출발`;
+            if (document.getElementById('roundTrip').checked){
+                var returnTime1 = document.getElementsByName('returnTime')[0].value;
+                var returnTime2 = document.getElementsByName('returnTime')[1].value;
+                var returnDate = document.getElementById('returnDate1').value;
+                if (returnTime1 && returnTime2 && (returnTime1 >= returnTime2)) {
+                    alert('귀국 시간 범위를 올바르게 설정해주세요.');
+                    return;
+                }
+                formData += `, 귀국날짜: ${returnDate}, 귀국시 ${returnTime1}시와 ${returnTime2}시 사이에 출발`;
+            }
+            alert(formData); // 경고창 출력
+            ['from', 'to', 'departureDate', 'returnDate1'].forEach(function(id) {
+                    var element = document.getElementById(id);
+                    element.style.borderColor = 'initial';
+                    element.value = '';
+                });
+            document.getElementsByName('departureTime')[0].value = 0;
+            document.getElementsByName('departureTime')[1].value = 23;
+            document.getElementsByName('returnTime')[0].value = 0;
+            document.getElementsByName('returnTime')[1].value = 23;
+            sendmessage(formData, document.getElementById('chat-input'));
+        });
             document.getElementById('send-btn').addEventListener('click', function() {
                 var input = document.getElementById('chat-input');
                 var message = input.value;
                 if (message) {
-                    addMessage(message, 'user-message');
-                    input.disabled = true; // 입력 비활성화
-                    input.value = ''; // 입력 필드 초기화
-                    fetch('/process_message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ message: message })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            addMessage(data.response, 'system-message');
-                            input.disabled = false; // 입력 활성화
-                        })
-                        .catch(error => console.error('Error:', error));
-                    }
-                });
+                    sendmessage(message, input);
+                }
+            });
             document.getElementById('toggle-chat-btn').addEventListener('click', function() {
                 var body = document.body;
                 body.classList.toggle('chat-visible');
             });
-            function addMessage(text, className) {
-                var chatBox = document.getElementById('chat-box');
-                var newMessage = document.createElement('div');
-                newMessage.textContent = text;
-                newMessage.classList.add('message', className);
-                chatBox.appendChild(newMessage);
-            }
             document.getElementById('chat-input').addEventListener('keyup', function(event) {
                 if (event.key === "Enter") {
                     var input = document.getElementById('chat-input');
@@ -255,23 +277,40 @@
                     }
             }
         });
-        
-            function addMessage(text, className) {
-                var chatBox = document.getElementById('chat-box');
-                var newMessage = document.createElement('div');
-                newMessage.textContent = text;
-                newMessage.classList.add('message', className);
-                chatBox.appendChild(newMessage);
+        function sendmessage(message, input){
+            addMessage(message, 'user-message');
+            input.disabled = true; // 입력 비활성화
+            input.value = ''; // 입력 필드 초기화
+            fetch('/process_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+                })
+                .then(response => response.json())
+                .then(data => {
+                addMessage(data.response, 'system-message');
+                input.disabled = false; // 입력 활성화
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        function addMessage(text, className) {
+            var chatBox = document.getElementById('chat-box');
+            var newMessage = document.createElement('div');
+            newMessage.textContent = text;
+            newMessage.classList.add('message', className);
+            chatBox.appendChild(newMessage);
             }
-            document.addEventListener('click', function(event) {
-                var chatContainer = document.getElementById('chat-container');
-                var toggleChatBtn = document.getElementById('toggle-chat-btn');
+        document.addEventListener('click', function(event) {
+            var toggleChatBtn = document.getElementById('toggle-chat-btn');
+            var chatContainer = document.getElementById('chat-container');
+            var flightForm = document.getElementById('flightForm');
         
-                // 채팅창 및 토글 버튼 외부 클릭 확인
-                if (!chatContainer.contains(event.target) && !toggleChatBtn.contains(event.target)) {
-                    document.body.classList.remove('chat-visible');
-                }
-            });
+            if (!toggleChatBtn.contains(event.target) && !chatContainer.contains(event.target) && !flightForm.contains(event.target)) {
+                document.body.classList.remove('chat-visible');
+            }
+        });
         </script>
     </div>
 </body>

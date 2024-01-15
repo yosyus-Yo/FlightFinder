@@ -49,9 +49,6 @@ if not assistants.data:
 else:
     assistant = assistants.data[0]
 
-def run_check(thread_id):
-    return run.status 
-    
 def wait_on_run(run):
     while run.status == "queued" or run.status == "in_progress":
             run = client.beta.threads.runs.retrieve(
@@ -67,12 +64,14 @@ def wait_on_run(run):
 # thread = client.beta.threads.create()
 # print(thread)
 thread_id = "thread_QiN4bxeyIAlh0eraL7CL3CJ8"
-run = client.beta.threads.runs.list(
-    thread_id=thread_id
-)
-if (run.data[0].status == "queued" or run.data[0].status == "in_progress"):
-    run = run.data[0]
-    run = client.beta.threads.runs.cancel(
+
+def run_cancel(thread_id):
+    run = client.beta.threads.runs.list(
+        thread_id=thread_id
+    )
+    if (run.data[0].status == "queued" or run.data[0].status == "in_progress"):
+        run = run.data[0]
+        run = client.beta.threads.runs.cancel(
         thread_id=thread_id,
         run_id=run.id,
         )
@@ -82,6 +81,7 @@ def thread_message():
 
 #msg_f7MmkNqk7FsgSeSaDMidMZDO
 def startMessage(inputC):
+    run_cancel(thread_id)
     InputChat = inputC
     if InputChat:
         message = client.beta.threads.messages.create(
